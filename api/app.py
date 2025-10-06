@@ -1,6 +1,8 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from dotenv import load_dotenv
+import os
+from functools import wraps
 from scrapers.homepage import fetch_homepage, clear_cache as clear_homepage_cache, get_cache_stats as get_homepage_cache_stats
 from scrapers.book_detail import fetch_book_detail, clear_cache as clear_book_detail_cache, get_cache_stats as get_book_detail_cache_stats
 from scrapers.bestsellers import fetch_bestsellers, clear_cache as clear_bestsellers_cache, get_cache_stats as get_bestsellers_cache_stats
@@ -10,6 +12,33 @@ load_dotenv()
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
+
+# Get API key from environment
+API_KEY = os.getenv('API_KEY')
+
+def require_api_key(f):
+    """Decorator to require API key for protected endpoints"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        # Check for API key in headers or query parameters
+        provided_key = request.headers.get('X-API-Key') or request.args.get('api_key')
+        
+        if not provided_key:
+            return jsonify({
+                'success': False,
+                'error': 'API key required',
+                'message': 'Please provide an API key in X-API-Key header or api_key query parameter'
+            }), 401
+        
+        if provided_key != API_KEY:
+            return jsonify({
+                'success': False,
+                'error': 'Invalid API key',
+                'message': 'The provided API key is invalid'
+            }), 403
+        
+        return f(*args, **kwargs)
+    return decorated_function
 
 # No global scraper instance needed for homepage fetch
 
@@ -39,6 +68,7 @@ def home():
     })
 
 @app.route('/api/homepage', methods=['GET', 'POST'])
+@require_api_key
 def scrape_waterstones_homepage():
     try:
         # Support optional cookie / UA overrides via headers or JSON body
@@ -57,6 +87,7 @@ def scrape_waterstones_homepage():
         return jsonify({"success": False, "error": str(e)}), 500
 
 @app.route('/api/book/<path:book_path>', methods=['GET', 'POST'])
+@require_api_key
 def scrape_book_detail(book_path):
     try:
         # Support optional cookie / UA overrides via headers or JSON body
@@ -78,6 +109,7 @@ def scrape_book_detail(book_path):
         return jsonify({"success": False, "error": str(e)}), 500
 
 @app.route('/api/books/bestsellers', methods=['GET', 'POST'])
+@require_api_key
 def scrape_bestsellers():
     try:
         # Support optional cookie / UA overrides via headers or JSON body
@@ -123,6 +155,7 @@ def scrape_bestsellers():
         return jsonify({"success": False, "error": str(e)}), 500
 
 @app.route('/api/books/bestsellers/page/<int:page>', methods=['GET', 'POST'])
+@require_api_key
 def scrape_bestsellers_page(page):
     """Return bestselling books from Waterstones for a specific page.
     
@@ -186,6 +219,7 @@ def scrape_bestsellers_page(page):
 
 # Specific filter endpoints for all sidebar options
 @app.route('/api/books/bestsellers/sort/<sort_option>', methods=['GET', 'POST'])
+@require_api_key
 def scrape_bestsellers_sort(sort_option):
     """Return bestselling books with specific sorting."""
     try:
@@ -226,6 +260,7 @@ def scrape_bestsellers_sort(sort_option):
         return jsonify({"success": False, "error": str(e)}), 500
 
 @app.route('/api/books/bestsellers/category/<category_id>', methods=['GET', 'POST'])
+@require_api_key
 def scrape_bestsellers_category(category_id):
     """Return bestselling books filtered by category."""
     try:
@@ -266,6 +301,7 @@ def scrape_bestsellers_category(category_id):
         return jsonify({"success": False, "error": str(e)}), 500
 
 @app.route('/api/books/bestsellers/format/<format_id>', methods=['GET', 'POST'])
+@require_api_key
 def scrape_bestsellers_format(format_id):
     """Return bestselling books filtered by format."""
     try:
@@ -306,6 +342,7 @@ def scrape_bestsellers_format(format_id):
         return jsonify({"success": False, "error": str(e)}), 500
 
 @app.route('/api/books/bestsellers/price/<min_price>/<max_price>', methods=['GET', 'POST'])
+@require_api_key
 def scrape_bestsellers_price_range(min_price, max_price):
     """Return bestselling books filtered by price range."""
     try:
@@ -345,6 +382,7 @@ def scrape_bestsellers_price_range(min_price, max_price):
         return jsonify({"success": False, "error": str(e)}), 500
 
 @app.route('/api/books/bestsellers/rating/<rating_stars>', methods=['GET', 'POST'])
+@require_api_key
 def scrape_bestsellers_rating(rating_stars):
     """Return bestselling books filtered by rating."""
     try:
@@ -385,6 +423,7 @@ def scrape_bestsellers_rating(rating_stars):
         return jsonify({"success": False, "error": str(e)}), 500
 
 @app.route('/api/books/bestsellers/author/<contributor_id>', methods=['GET', 'POST'])
+@require_api_key
 def scrape_bestsellers_author(contributor_id):
     """Return bestselling books filtered by author/contributor."""
     try:
@@ -425,6 +464,7 @@ def scrape_bestsellers_author(contributor_id):
         return jsonify({"success": False, "error": str(e)}), 500
 
 @app.route('/api/books/bestsellers/publisher/<publisher_id>', methods=['GET', 'POST'])
+@require_api_key
 def scrape_bestsellers_publisher(publisher_id):
     """Return bestselling books filtered by publisher."""
     try:
@@ -465,6 +505,7 @@ def scrape_bestsellers_publisher(publisher_id):
         return jsonify({"success": False, "error": str(e)}), 500
 
 @app.route('/api/books/bestsellers/facet/<facet_id>', methods=['GET', 'POST'])
+@require_api_key
 def scrape_bestsellers_facet(facet_id):
     """Return bestselling books filtered by facet (language, age, geographic region, etc.)."""
     try:
@@ -505,6 +546,7 @@ def scrape_bestsellers_facet(facet_id):
         return jsonify({"success": False, "error": str(e)}), 500
 
 @app.route('/api/books/bestsellers/filter', methods=['GET', 'POST'])
+@require_api_key
 def scrape_bestsellers_multiple_filters():
     """Return bestselling books with multiple filters applied via query parameters."""
     try:
@@ -547,6 +589,7 @@ def scrape_bestsellers_multiple_filters():
         return jsonify({"success": False, "error": str(e)}), 500
 
 @app.route('/cache/stats', methods=['GET'])
+@require_api_key
 def cache_stats():
     """Get cache statistics."""
     try:
@@ -578,6 +621,7 @@ def cache_stats():
         return jsonify({"success": False, "error": str(e)}), 500
 
 @app.route('/cache/clear', methods=['POST'])
+@require_api_key
 def clear_cache_endpoint():
     """Clear the cache."""
     try:

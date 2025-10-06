@@ -11,5 +11,6 @@ export const DEFAULT_FETCH_OPTIONS: RequestInit = {
   cache: 'no-store',
   headers: {
     'Content-Type': 'application/json',
+    'X-API-Key': process.env.NEXT_PUBLIC_API_KEY || '',
   },
 };

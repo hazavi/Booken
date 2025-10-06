@@ -99,7 +99,11 @@ export default function BestsellersPage() {
         params.toString() ? `?${params.toString()}` : ""
       }`;
 
-      const response = await fetch(url);
+      const response = await fetch(url, {
+        headers: {
+          "X-API-Key": process.env.NEXT_PUBLIC_API_KEY || "",
+        },
+      });
       const result = await response.json();
 
       if (result.success) {

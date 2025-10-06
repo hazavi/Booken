@@ -86,6 +86,9 @@ export default async function BookPage({ params }: PageProps) {
   try {
     const response = await fetch(`http://localhost:5000/api/book/${bookPath}`, {
       cache: "no-store",
+      headers: {
+        "X-API-Key": process.env.NEXT_PUBLIC_API_KEY || "",
+      },
     });
 
     if (!response.ok) {
