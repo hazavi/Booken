@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import BookCard from "../../components/BookCard";
+import BookCard from "../../../components/BookCard";
 
 interface Author {
   name: string;

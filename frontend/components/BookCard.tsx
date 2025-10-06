@@ -1,17 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-
-interface Book {
-  title: string;
-  author: string;
-  image: string;
-  price: string;
-  url: string;
-  isbn: string;
-  format: string;
-  alt_text: string;
-  product_id: string;
-}
+import type { Book } from "../lib/types";
 
 interface BookCardProps {
   book: Book;

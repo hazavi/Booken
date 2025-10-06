@@ -1,17 +1,10 @@
 import BookCarousel from "./components/BookCarousel";
-import Hero from "./components/Hero";
+import Hero from "../components/Hero";
+import { getHomepageData } from "../lib";
 
 export default async function Home() {
   try {
-    const response = await fetch("http://localhost:5000/api/homepage", {
-      cache: "no-store",
-    });
-
-    if (!response.ok) {
-      throw new Error("Failed to fetch books");
-    }
-
-    const data = await response.json();
+    const data = await getHomepageData();
     const sections = data.data?.sections || [];
 
     return (
@@ -19,7 +12,7 @@ export default async function Home() {
         <Hero />
 
         <main className="main-sections">
-          {sections.map((section: any, index: number) => (
+          {sections.map((section, index) => (
             <BookCarousel
               key={index}
               title={section.title}

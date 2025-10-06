@@ -2,8 +2,8 @@
 
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import BookCard from "../../components/BookCard";
-import type { Book } from "../../lib/types";
+import BookCard from "./BookCard";
+import type { Book } from "../lib/types";
 
 interface BookCarouselProps {
   title: string;

@@ -51,6 +51,9 @@ export default function Navbar() {
           <Link href="/" className="navbar-link active">
             Home
           </Link>
+          <Link href="/books/bestsellers" className="navbar-link">
+            Bestsellers
+          </Link>
           <Link href="/categories" className="navbar-link">
             Categories
           </Link>
@@ -81,6 +84,9 @@ export default function Navbar() {
         </div>
         <Link href="/" className="mobile-nav-link">
           Home
+        </Link>
+        <Link href="/books/bestsellers" className="mobile-nav-link">
+          Bestsellers
         </Link>
         <Link href="/categories" className="mobile-nav-link">
           Categories
