@@ -4,14 +4,12 @@ import { useState, useEffect } from "react";
 import Navbar from "../../../components/Navbar";
 import Footer from "../../../components/Footer";
 import BestsellerBookCard from "../../../components/BestsellerBookCard";
+import { Filter, X, ChevronDown, BookOpen, TrendingUp } from "lucide-react";
 import {
-  Filter,
-  X,
-  ChevronDown,
-  BookOpen,
-  TrendingUp,
-} from "lucide-react";
-import { getBestsellers, type BestsellerParams, type BestsellerData } from "../../../lib/books";
+  getBestsellers,
+  type BestsellerParams,
+  type BestsellerData,
+} from "../../../lib/books";
 
 export default function BestsellersPage() {
   const [data, setData] = useState<BestsellerData | null>(null);

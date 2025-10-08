@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from 'react';
-import Image from 'next/image';
+import { useState } from "react";
+import Image from "next/image";
 
 interface SafeImageProps {
   src: string;
@@ -13,13 +13,14 @@ interface SafeImageProps {
   quality?: number;
 }
 
-const FALLBACK_IMAGE = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='600' viewBox='0 0 400 600'%3E%3Crect width='400' height='600' fill='%23f8f9fa'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%23666' font-family='system-ui' font-size='24'%3EBook Cover%3C/text%3E%3C/svg%3E";
+const FALLBACK_IMAGE =
+  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='600' viewBox='0 0 400 600'%3E%3Crect width='400' height='600' fill='%23f8f9fa'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%23666' font-family='system-ui' font-size='24'%3EBook Cover%3C/text%3E%3C/svg%3E";
 
 export default function SafeImage({
   src,
   alt,
   fill = false,
-  className = '',
+  className = "",
   sizes = "(max-width: 480px) 400px, (max-width: 768px) 500px, (max-width: 1024px) 400px, 600px",
   priority = false,
   quality = 100,

@@ -10,13 +10,12 @@ interface BestsellerBookCardProps {
   index?: number;
 }
 
-export default function BestsellerBookCard({ 
-  book, 
+export default function BestsellerBookCard({
+  book,
   priority = false,
   sizes = "(max-width: 480px) 400px, (max-width: 768px) 600px, (max-width: 1024px) 500px, 800px",
-  index = 0
+  index = 0,
 }: BestsellerBookCardProps) {
-  
   const renderStars = (rating?: { stars: string }) => {
     if (!rating || !rating.stars) {
       return (
@@ -117,9 +116,7 @@ export default function BestsellerBookCard({
             {book.title}
           </h3>
 
-          <p className="book-author book-author-compact">
-            {book.author}
-          </p>
+          <p className="book-author book-author-compact">{book.author}</p>
 
           <div className="book-rating book-rating-compact">
             {renderStars(book.rating)}

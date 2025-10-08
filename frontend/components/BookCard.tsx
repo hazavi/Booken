@@ -8,10 +8,10 @@ interface BookCardProps {
   sizes?: string;
 }
 
-export default function BookCard({ 
-  book, 
+export default function BookCard({
+  book,
   priority = false,
-  sizes = "(max-width: 480px) 400px, (max-width: 768px) 600px, (max-width: 1024px) 500px, 800px"
+  sizes = "(max-width: 480px) 400px, (max-width: 768px) 600px, (max-width: 1024px) 500px, 800px",
 }: BookCardProps) {
   const bookUrl = book.url;
 
