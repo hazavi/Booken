@@ -69,9 +69,13 @@ export default function BookCarousel({
 
       <div className="carousel-container">
         <div ref={scrollRef} className="carousel-track" onScroll={handleScroll}>
-          {books.map((book) => (
+          {books.map((book, index) => (
             <div key={book.product_id} className="carousel-item">
-              <BookCard book={book} />
+              <BookCard 
+                book={book} 
+                priority={index < 4}
+                sizes="(max-width: 640px) 300px, (max-width: 1024px) 400px, 400px"
+              />
             </div>
           ))}
         </div>

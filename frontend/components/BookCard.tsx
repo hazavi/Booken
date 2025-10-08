@@ -1,24 +1,32 @@
-import Image from "next/image";
 import Link from "next/link";
+import SafeImage from "./SafeImage";
 import type { Book } from "../lib/types";
 
 interface BookCardProps {
   book: Book;
+  priority?: boolean;
+  sizes?: string;
 }
 
-export default function BookCard({ book }: BookCardProps) {
+export default function BookCard({ 
+  book, 
+  priority = false,
+  sizes = "(max-width: 480px) 400px, (max-width: 768px) 600px, (max-width: 1024px) 500px, 800px"
+}: BookCardProps) {
   const bookUrl = book.url;
 
   return (
     <Link href={bookUrl} className="book-card-link">
       <div className="book-card">
         <div className="book-image-container">
-          <Image
+          <SafeImage
             src={book.image}
-            alt={book.alt_text}
+            alt={book.alt_text || book.title}
             fill
             className="book-image"
-            sizes="200px"
+            sizes={sizes}
+            priority={priority}
+            quality={100}
           />
           <div className="book-overlay"></div>
         </div>

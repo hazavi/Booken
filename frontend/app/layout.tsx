@@ -10,9 +10,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Booken - Modern Bookstore",
+  title: "Booken",
   description:
-    "Discover your next favorite book at Booken - A modern, minimalistic bookstore experience",
+    "Discover your next favorite book at Booken.",
 };
 
 export default function RootLayout({

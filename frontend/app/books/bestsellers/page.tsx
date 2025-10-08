@@ -3,65 +3,15 @@
 import { useState, useEffect } from "react";
 import Navbar from "../../../components/Navbar";
 import Footer from "../../../components/Footer";
+import BestsellerBookCard from "../../../components/BestsellerBookCard";
 import {
   Filter,
   X,
   ChevronDown,
-  Star,
   BookOpen,
   TrendingUp,
 } from "lucide-react";
-
-interface Book {
-  title: string;
-  author: string;
-  author_url: string;
-  image: string;
-  image_alt: string;
-  price: string;
-  price_rrp?: string;
-  rating?: {
-    stars: string;
-  };
-  stock_status: string;
-  format: string;
-  url: string;
-  isbn: string;
-}
-
-interface FilterOption {
-  name: string;
-  url: string;
-  value?: string;
-  label?: string;
-}
-
-interface BestsellerData {
-  books: Book[];
-  filters: {
-    category: FilterOption[];
-    format: FilterOption[];
-    author: FilterOption[];
-    publisher: FilterOption[];
-    language: FilterOption[];
-    sort_options: FilterOption[];
-    price_range: {
-      min_default: string;
-      max_default: string;
-    };
-  };
-  pagination: {
-    current_page: number;
-    total_pages: number;
-    next_url?: string;
-    total_items: string;
-  };
-  metadata: {
-    title: string;
-    books_count: number;
-    sort: string;
-  };
-}
+import { getBestsellers, type BestsellerParams, type BestsellerData } from "../../../lib/books";
 
 export default function BestsellersPage() {
   const [data, setData] = useState<BestsellerData | null>(null);
@@ -85,28 +35,20 @@ export default function BestsellersPage() {
     setError(null);
 
     try {
-      const params = new URLSearchParams();
-      if (selectedSort) params.append("sort", selectedSort);
-      if (selectedCategory) params.append("category", selectedCategory);
-      if (selectedFormat) params.append("format", selectedFormat);
-      if (selectedAuthor) params.append("contributor", selectedAuthor);
-      if (selectedPublisher) params.append("publisher", selectedPublisher);
-      if (minPrice) params.append("min_price", minPrice);
-      if (maxPrice) params.append("max_price", maxPrice);
-      if (currentPage > 1) params.append("page", currentPage.toString());
+      const params: BestsellerParams = {
+        sort: selectedSort,
+        category: selectedCategory || undefined,
+        format: selectedFormat || undefined,
+        contributor: selectedAuthor || undefined,
+        publisher: selectedPublisher || undefined,
+        min_price: minPrice || undefined,
+        max_price: maxPrice || undefined,
+        page: currentPage > 1 ? currentPage : undefined,
+      };
 
-      const url = `http://localhost:5000/api/books/bestsellers${
-        params.toString() ? `?${params.toString()}` : ""
-      }`;
+      const result = await getBestsellers(params);
 
-      const response = await fetch(url, {
-        headers: {
-          "X-API-Key": process.env.NEXT_PUBLIC_API_KEY || "",
-        },
-      });
-      const result = await response.json();
-
-      if (result.success) {
+      if (result.success && result.data) {
         setData(result.data);
       } else {
         setError(result.error || "Failed to fetch data");
@@ -162,83 +104,6 @@ export default function BestsellersPage() {
   const extractIdFromUrl = (url: string): string => {
     const parts = url.split("/");
     return parts[parts.length - 1] || "";
-  };
-
-  const renderStars = (rating?: { stars: string }) => {
-    if (!rating || !rating.stars) {
-      return (
-        <div className="rating-stars">
-          {[...Array(5)].map((_, i) => (
-            <Star key={i} className="star star-empty" fill="none" />
-          ))}
-          <span className="rating-text">(No rating)</span>
-        </div>
-      );
-    }
-
-    const stars = parseFloat(rating.stars) || 0;
-
-    return (
-      <div className="rating-stars">
-        {[...Array(5)].map((_, i) => {
-          const ratingValue = parseFloat(rating?.stars || "0");
-          const isHalf = ratingValue > i && ratingValue < i + 1;
-          const isFull = ratingValue >= i + 1;
-
-          if (isFull) {
-            return (
-              <svg
-                key={i}
-                className="star star-filled"
-                fill="currentColor"
-                viewBox="0 0 20 20"
-              >
-                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-              </svg>
-            );
-          } else if (isHalf) {
-            return (
-              <div key={i} className="star star-half">
-                <svg
-                  className="star-empty"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                </svg>
-                <svg
-                  className="star-filled-half"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <defs>
-                    <clipPath id={`half-bestseller-${i}`}>
-                      <rect width="10" height="20" />
-                    </clipPath>
-                  </defs>
-                  <path
-                    clipPath={`url(#half-bestseller-${i})`}
-                    d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"
-                  />
-                </svg>
-              </div>
-            );
-          } else {
-            return (
-              <svg
-                key={i}
-                className="star star-empty"
-                fill="currentColor"
-                viewBox="0 0 20 20"
-              >
-                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-              </svg>
-            );
-          }
-        })}
-        <span className="rating-text">({rating.stars})</span>
-      </div>
-    );
   };
 
   if (loading && !data) {
@@ -569,65 +434,13 @@ export default function BestsellersPage() {
               <>
                 <div className="books-grid">
                   {data.books.map((book, index) => (
-                    <a
+                    <BestsellerBookCard
                       key={`${book.isbn}-${index}`}
-                      href={book.url}
-                      rel="noopener noreferrer"
-                      className="book-card-link"
-                    >
-                      <article className="book-card">
-                        <div className="book-image-container">
-                          <img
-                            src={book.image}
-                            alt={book.image_alt || book.title}
-                            className="book-image"
-                          />
-                          <div className="book-overlay"></div>
-                          {book.price_rrp && book.price !== book.price_rrp && (
-                            <div className="book-sale-badge">Sale</div>
-                          )}
-                        </div>
-
-                        <div className="book-content book-content-compact">
-                          <h3 className="book-title book-title-compact">
-                            {book.title}
-                          </h3>
-
-                          <p className="book-author book-author-compact">
-                            {book.author}
-                          </p>
-
-                          <div className="book-rating book-rating-compact">
-                            {renderStars(book.rating)}
-                          </div>
-
-                          <div className="book-footer book-footer-compact">
-                            <div className="book-price-group">
-                              <span className="book-price book-price-compact">
-                                {book.price}
-                              </span>
-                              {book.price_rrp &&
-                                book.price !== book.price_rrp && (
-                                  <span className="book-price-original book-price-original-compact">
-                                    {book.price_rrp}
-                                  </span>
-                                )}
-                            </div>
-                            <span
-                              className={`book-format book-format-compact ${
-                                book.stock_status === "In stock online"
-                                  ? "book-format-available"
-                                  : book.stock_status === "Pre-order"
-                                  ? "book-format-preorder"
-                                  : "book-format-default"
-                              }`}
-                            >
-                              {book.stock_status || book.format}
-                            </span>
-                          </div>
-                        </div>
-                      </article>
-                    </a>
+                      book={book}
+                      priority={index < 6}
+                      sizes="(max-width: 480px) 400px, (max-width: 768px) 600px, (max-width: 1024px) 500px, 800px"
+                      index={index}
+                    />
                   ))}
                 </div>
 
