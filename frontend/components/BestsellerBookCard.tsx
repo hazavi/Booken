@@ -13,7 +13,7 @@ interface BestsellerBookCardProps {
 export default function BestsellerBookCard({
   book,
   priority = false,
-  sizes = "(max-width: 480px) 400px, (max-width: 768px) 600px, (max-width: 1024px) 500px, 800px",
+  sizes = "(max-width: 480px) 45vw, (max-width: 768px) 30vw, (max-width: 1024px) 22vw, (max-width: 1280px) 18vw, 15vw",
   index = 0,
 }: BestsellerBookCardProps) {
   const renderStars = (rating?: { stars: string }) => {
@@ -103,7 +103,7 @@ export default function BestsellerBookCard({
             className="book-image"
             sizes={sizes}
             priority={priority}
-            quality={100}
+            quality={90}
           />
           <div className="book-overlay"></div>
           {book.price_rrp && book.price !== book.price_rrp && (
@@ -133,17 +133,21 @@ export default function BestsellerBookCard({
                 </span>
               )}
             </div>
-            <span
-              className={`book-format book-format-compact ${
-                book.stock_status === "In stock online"
-                  ? "book-format-available"
-                  : book.stock_status === "Pre-order"
-                  ? "book-format-preorder"
-                  : "book-format-default"
-              }`}
-            >
-              {book.stock_status || book.format}
-            </span>
+            {book.stock_status && (
+              <span
+                className={`book-format book-format-compact ${
+                  book.stock_status === "In stock online"
+                    ? "book-format-available"
+                    : book.stock_status === "Pre-order"
+                    ? "book-format-preorder"
+                    : "book-format-default"
+                }`}
+              >
+                {book.stock_status === "In stock online"
+                  ? "In Stock"
+                  : book.stock_status}
+              </span>
+            )}
           </div>
         </div>
       </article>

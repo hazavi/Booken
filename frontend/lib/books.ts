@@ -2,34 +2,6 @@ import { API_BASE_URL, API_ENDPOINTS, DEFAULT_FETCH_OPTIONS } from './config';
 import { BookDetailResponse } from './types';
 
 /**
- * Enhance image URL to get higher quality version
- * @param url - Original image URL
- * @returns Enhanced URL for better quality
- */
-function enhanceImageQuality(url: string): string {
-  if (!url || !url.includes('cdn.waterstones.com')) {
-    return url;
-  }
-  
-  // For Waterstones URLs, replace medium with large for higher quality
-  if (url.includes('/medium/')) {
-    return url.replace('/medium/', '/large/');
-  }
-  
-  // If no medium found, try to upgrade the size in URL
-  // Example: change 200x300 to 400x600
-  const sizeMatch = url.match(/(\d+)x(\d+)/);
-  if (sizeMatch) {
-    const [, width, height] = sizeMatch;
-    const newWidth = Math.min(parseInt(width) * 2, 800);
-    const newHeight = Math.min(parseInt(height) * 2, 1200);
-    return url.replace(`${width}x${height}`, `${newWidth}x${newHeight}`);
-  }
-  
-  return url;
-}
-
-/**
  * Parameters for bestsellers API
  */
 export interface BestsellerParams {
@@ -139,14 +111,6 @@ export async function getBestsellers(params: BestsellerParams = {}): Promise<Bes
     }
 
     const result = await response.json();
-    
-    // Enhance image URLs for better quality
-    if (result.success && result.data?.books) {
-      result.data.books = result.data.books.map((book: Book) => ({
-        ...book,
-        image: enhanceImageQuality(book.image)
-      }));
-    }
 
     return result;
   } catch (error) {

@@ -1,10 +1,21 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Navbar from "../../../components/Navbar";
 import Footer from "../../../components/Footer";
 import BestsellerBookCard from "../../../components/BestsellerBookCard";
-import { Filter, X, ChevronDown, BookOpen, TrendingUp } from "lucide-react";
+import BookCardSkeleton from "../../../components/BookCardSkeleton";
+import LoadingSpinner from "../../../components/LoadingSpinner";
+import {
+  Filter,
+  X,
+  ChevronDown,
+  BookOpen,
+  TrendingUp,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import {
   getBestsellers,
   type BestsellerParams,
@@ -12,20 +23,56 @@ import {
 } from "../../../lib/books";
 
 export default function BestsellersPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
   const [data, setData] = useState<BestsellerData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // Filter states
   const [showFilters, setShowFilters] = useState(false);
-  const [selectedSort, setSelectedSort] = useState("bestselling");
-  const [selectedCategory, setSelectedCategory] = useState("");
-  const [selectedFormat, setSelectedFormat] = useState("");
-  const [selectedAuthor, setSelectedAuthor] = useState("");
-  const [selectedPublisher, setSelectedPublisher] = useState("");
-  const [minPrice, setMinPrice] = useState("");
-  const [maxPrice, setMaxPrice] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
+  const [selectedSort, setSelectedSort] = useState(
+    searchParams.get("sort") || "bestselling"
+  );
+  const [selectedCategory, setSelectedCategory] = useState(
+    searchParams.get("category") || ""
+  );
+  const [selectedFormat, setSelectedFormat] = useState(
+    searchParams.get("format") || ""
+  );
+  const [selectedAuthor, setSelectedAuthor] = useState(
+    searchParams.get("contributor") || ""
+  );
+  const [selectedPublisher, setSelectedPublisher] = useState(
+    searchParams.get("publisher") || ""
+  );
+  const [minPrice, setMinPrice] = useState(searchParams.get("min_price") || "");
+  const [maxPrice, setMaxPrice] = useState(searchParams.get("max_price") || "");
+  const [currentPage, setCurrentPage] = useState(
+    parseInt(searchParams.get("page") || "1")
+  );
+
+  // Update URL with current filters
+  const updateURL = (page?: number) => {
+    const params = new URLSearchParams();
+
+    if (selectedSort && selectedSort !== "bestselling")
+      params.set("sort", selectedSort);
+    if (selectedCategory) params.set("category", selectedCategory);
+    if (selectedFormat) params.set("format", selectedFormat);
+    if (selectedAuthor) params.set("contributor", selectedAuthor);
+    if (selectedPublisher) params.set("publisher", selectedPublisher);
+    if (minPrice) params.set("min_price", minPrice);
+    if (maxPrice) params.set("max_price", maxPrice);
+    if (page && page > 1) params.set("page", page.toString());
+
+    const queryString = params.toString();
+    const newURL = queryString
+      ? `/books/bestsellers?${queryString}`
+      : "/books/bestsellers";
+    router.push(newURL, { scroll: false });
+  };
 
   // Fetch data function
   const fetchData = async () => {
@@ -69,6 +116,7 @@ export default function BestsellersPage() {
     if (data) {
       // Only refetch if we have initial data
       setCurrentPage(1); // Reset to page 1 when filters change
+      updateURL(1);
       fetchData();
     }
   }, [
@@ -83,7 +131,8 @@ export default function BestsellersPage() {
 
   // Refetch when page changes
   useEffect(() => {
-    if (data && currentPage > 1) {
+    if (data) {
+      updateURL(currentPage);
       fetchData();
     }
   }, [currentPage]);
@@ -97,6 +146,7 @@ export default function BestsellersPage() {
     setMinPrice("");
     setMaxPrice("");
     setCurrentPage(1);
+    router.push("/books/bestsellers");
   };
 
   const extractIdFromUrl = (url: string): string => {
@@ -108,10 +158,37 @@ export default function BestsellersPage() {
     return (
       <div className="page-container">
         <Navbar />
-        <div className="loading-state">
-          <div className="loading-spinner"></div>
-          <p>Loading bestsellers...</p>
+
+        <div className="page-header">
+          <div className="page-header-content">
+            <h1 className="page-title">Bestselling Books</h1>
+          </div>
         </div>
+
+        <main className="main-sections">
+          <div className="bestsellers-layout">
+            <aside className="filters-sidebar">
+              <div className="filters-panel">
+                <div
+                  className="skeleton skeleton-filter"
+                  style={{ height: "300px", borderRadius: "8px" }}
+                >
+                  <div className="skeleton-shimmer"></div>
+                </div>
+              </div>
+            </aside>
+
+            <div className="bestsellers-content">
+              <div className="books-grid">
+                {[...Array(24)].map((_, index) => (
+                  <BookCardSkeleton key={`skeleton-initial-${index}`} />
+                ))}
+              </div>
+            </div>
+          </div>
+        </main>
+
+        <Footer />
       </div>
     );
   }
@@ -139,25 +216,7 @@ export default function BestsellersPage() {
       {/* Page Header */}
       <div className="page-header">
         <div className="page-header-content">
-          <h1 className="page-title">
-            <TrendingUp className="page-title-icon" />
-            Bestselling Books
-          </h1>
-          {data && (
-            <div className="page-stats">
-              <span className="page-stat">
-                <BookOpen className="w-4 h-4" />
-                {data.metadata.books_count} books
-              </span>
-              <span className="page-stat">
-                Page {data.pagination.current_page} of{" "}
-                {data.pagination.total_pages.toLocaleString()}
-              </span>
-              <span className="page-stat">
-                {parseInt(data.pagination.total_items).toLocaleString()} total
-              </span>
-            </div>
-          )}
+          <h1 className="page-title">Bestselling Books</h1>
         </div>
       </div>
 
@@ -405,38 +464,22 @@ export default function BestsellersPage() {
 
           {/* Main Content */}
           <div className="bestsellers-content">
-            {/* Results Header */}
-            <div className="results-header">
-              <div className="results-info">
-                <h2 className="section-title">
-                  {data?.metadata.title || "Bestselling Books"}
-                </h2>
-                <p className="results-count">
-                  Showing {data?.metadata.books_count || 0} books
-                  {data?.pagination && data.pagination.current_page > 1 && (
-                    <span> - Page {data.pagination.current_page}</span>
-                  )}
-                </p>
-              </div>
-
-              {loading && (
-                <div className="loading-indicator">
-                  <div className="loading-spinner"></div>
-                  <span>Updating...</span>
-                </div>
-              )}
-            </div>
-
             {/* Books Grid */}
-            {data?.books && data.books.length > 0 ? (
+            {loading ? (
+              <div className="books-grid">
+                {[...Array(24)].map((_, index) => (
+                  <BookCardSkeleton key={`skeleton-${index}`} />
+                ))}
+              </div>
+            ) : data?.books && data.books.length > 0 ? (
               <>
                 <div className="books-grid">
                   {data.books.map((book, index) => (
                     <BestsellerBookCard
                       key={`${book.isbn}-${index}`}
                       book={book}
-                      priority={index < 6}
-                      sizes="(max-width: 480px) 400px, (max-width: 768px) 600px, (max-width: 1024px) 500px, 800px"
+                      priority={index < 12}
+                      sizes="(max-width: 480px) 45vw, (max-width: 768px) 30vw, (max-width: 1024px) 22vw, (max-width: 1280px) 18vw, 15vw"
                       index={index}
                     />
                   ))}
@@ -446,30 +489,42 @@ export default function BestsellersPage() {
                 {data.pagination && data.pagination.total_pages > 1 && (
                   <div className="pagination">
                     <button
-                      onClick={() =>
-                        setCurrentPage(Math.max(1, currentPage - 1))
-                      }
+                      onClick={() => {
+                        const newPage = Math.max(1, currentPage - 1);
+                        setCurrentPage(newPage);
+                        window.scrollTo({ top: 0, behavior: "smooth" });
+                      }}
                       disabled={currentPage <= 1}
                       className="pagination-button pagination-button-prev"
                     >
-                      Previous
+                      <ChevronLeft className="pagination-icon" />
+                      <span>Previous</span>
                     </button>
 
-                    <span className="pagination-info">
-                      Page {currentPage} of{" "}
-                      {data.pagination.total_pages.toLocaleString()}
-                    </span>
+                    <div className="pagination-info">
+                      <span className="pagination-current">
+                        Page {currentPage}
+                      </span>
+                      <span className="pagination-separator">of</span>
+                      <span className="pagination-total">
+                        {data.pagination.total_pages.toLocaleString()}
+                      </span>
+                    </div>
 
                     <button
-                      onClick={() =>
-                        setCurrentPage(
-                          Math.min(data.pagination.total_pages, currentPage + 1)
-                        )
-                      }
+                      onClick={() => {
+                        const newPage = Math.min(
+                          data.pagination.total_pages,
+                          currentPage + 1
+                        );
+                        setCurrentPage(newPage);
+                        window.scrollTo({ top: 0, behavior: "smooth" });
+                      }}
                       disabled={currentPage >= data.pagination.total_pages}
                       className="pagination-button pagination-button-next"
                     >
-                      Next
+                      <span>Next</span>
+                      <ChevronRight className="pagination-icon" />
                     </button>
                   </div>
                 )}

@@ -24,15 +24,11 @@ const nextConfig: NextConfig = {
     dangerouslyAllowSVG: true,
     contentDispositionType: 'attachment',
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
-    minimumCacheTTL: 3600, // Cache for 1 hour
+    minimumCacheTTL: 60,
     deviceSizes: [640, 768, 1024, 1280, 1600, 1920],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384, 512, 640, 768],
-    qualities: [75, 90, 100], // Configure allowed quality values
-    // Fallback for unoptimized images
     unoptimized: false,
-    // Handle upstream errors gracefully
-    domains: ['cdn.waterstones.com'],
-    formats: ['image/avif', 'image/webp'],
+    formats: ['image/webp'],
   },
   experimental: {
     optimizePackageImports: ['@heroicons/react'],
