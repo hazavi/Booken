@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import BookCard from "../../../components/BookCard";
+import ReadMoreText from "@/components/ReadMoreText";
 
 interface Author {
   name: string;
@@ -277,17 +278,7 @@ export default async function BookPage({ params }: PageProps) {
               {/* Synopsis */}
               <div className="book-page-synopsis">
                 <h2 className="book-page-section-title">About this book</h2>
-                <p className="book-page-synopsis-text">{book_info.synopsis}</p>
-                {book_info.waterstones_says && (
-                  <div className="book-page-highlight">
-                    <h3 className="book-page-highlight-title">
-                      Waterstones Says
-                    </h3>
-                    <p className="book-page-highlight-text">
-                      {book_info.waterstones_says}
-                    </p>
-                  </div>
-                )}
+                <ReadMoreText text={book_info.synopsis} maxLines={4} />
               </div>
             </div>
           </div>
@@ -302,7 +293,7 @@ export default async function BookPage({ params }: PageProps) {
                   {book_info.media_reviews.slice(0, 3).map((review, index) => (
                     <div key={index} className="book-page-review-item">
                       <p className="book-page-review-content">
-                        "{review.content}"
+                        {review.content}
                       </p>
                       <p className="book-page-review-source">
                         — {review.source}
