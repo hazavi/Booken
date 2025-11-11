@@ -1,4 +1,4 @@
-import { API_BASE_URL, API_ENDPOINTS, DEFAULT_FETCH_OPTIONS } from './config';
+import { API_BASE_URL, API_ENDPOINTS, buildApiUrl, DEFAULT_FETCH_OPTIONS } from './config';
 import { BookDetailResponse } from './types';
 
 /**
@@ -89,20 +89,18 @@ export interface BestsellerResponse {
  */
 export async function getBestsellers(params: BestsellerParams = {}): Promise<BestsellerResponse> {
   try {
-    const searchParams = new URLSearchParams();
+    const queryParams: Record<string, string> = {};
     
-    if (params.sort) searchParams.append("sort", params.sort);
-    if (params.category) searchParams.append("category", params.category);
-    if (params.format) searchParams.append("format", params.format);
-    if (params.contributor) searchParams.append("contributor", params.contributor);
-    if (params.publisher) searchParams.append("publisher", params.publisher);
-    if (params.min_price) searchParams.append("min_price", params.min_price);
-    if (params.max_price) searchParams.append("max_price", params.max_price);
-    if (params.page && params.page > 1) searchParams.append("page", params.page.toString());
+    if (params.sort) queryParams.sort = params.sort;
+    if (params.category) queryParams.category = params.category;
+    if (params.format) queryParams.format = params.format;
+    if (params.contributor) queryParams.contributor = params.contributor;
+    if (params.publisher) queryParams.publisher = params.publisher;
+    if (params.min_price) queryParams.min_price = params.min_price;
+    if (params.max_price) queryParams.max_price = params.max_price;
+    if (params.page && params.page > 1) queryParams.page = params.page.toString();
 
-    const url = `${API_BASE_URL}${API_ENDPOINTS.BESTSELLERS}${
-      searchParams.toString() ? `?${searchParams.toString()}` : ""
-    }`;
+    const url = buildApiUrl(API_ENDPOINTS.BESTSELLERS, queryParams);
 
     const response = await fetch(url, DEFAULT_FETCH_OPTIONS);
 
@@ -110,7 +108,14 @@ export async function getBestsellers(params: BestsellerParams = {}): Promise<Bes
       throw new Error(`Failed to fetch bestsellers: ${response.status} ${response.statusText}`);
     }
 
-    const result = await response.json();
+    const result: BestsellerResponse = await response.json();
+
+    if (!result.success) {
+      return {
+        success: false,
+        error: result.error || 'Failed to fetch bestsellers'
+      };
+    }
 
     return result;
   } catch (error) {
@@ -128,16 +133,21 @@ export async function getBestsellers(params: BestsellerParams = {}): Promise<Bes
  */
 export async function getBookDetails(bookPath: string): Promise<BookDetailResponse> {
   try {
-    const response = await fetch(
-      `${API_BASE_URL}${API_ENDPOINTS.BOOK_DETAIL}/${bookPath}`,
-      DEFAULT_FETCH_OPTIONS
-    );
+    const url = buildApiUrl(`${API_ENDPOINTS.BOOK_DETAIL}/${bookPath}`);
+    
+    const response = await fetch(url, DEFAULT_FETCH_OPTIONS);
 
     if (!response.ok) {
       throw new Error(`Failed to fetch book details: ${response.status} ${response.statusText}`);
     }
 
-    return await response.json();
+    const result: BookDetailResponse = await response.json();
+    
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to fetch book details');
+    }
+
+    return result;
   } catch (error) {
     console.error('Error fetching book details:', error);
     throw error;

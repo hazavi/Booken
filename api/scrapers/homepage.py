@@ -5,22 +5,30 @@ from urllib.parse import urljoin
 from typing import Dict, List
 import time
 import hashlib
+from pathlib import Path
+from dotenv import load_dotenv
+
+# Load environment variables from parent directory's .env file
+_env_path = Path(__file__).parent.parent / '.env'
+load_dotenv(dotenv_path=_env_path)
 
 WATERSTONES_URL = "https://www.waterstones.com/"
 BASE_HEADERS = {
-    # Default to a modern desktop UA; can be overridden via env or request
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
-    "Accept-Language": "en-US,en;q=0.9",
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+    # Default to a modern desktop UA matching Chrome 142; can be overridden via env or request
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+    "Accept-Language": "en,da;q=0.9,en-US;q=0.8",
+    "Accept-Encoding": "gzip, deflate, br, zstd",
+    "Sec-CH-UA": '"Chromium";v="142", "Google Chrome";v="142", "Not_A Brand";v="99"',
+    "Sec-CH-UA-Mobile": "?0",
+    "Sec-CH-UA-Platform": '"Windows"',
+    "Sec-Fetch-Dest": "document",
+    "Sec-Fetch-Mode": "navigate",
+    "Sec-Fetch-Site": "same-origin",
+    "Sec-Fetch-User": "?1",
+    "Upgrade-Insecure-Requests": "1",
     "Cache-Control": "no-cache",
     "Pragma": "no-cache",
-    "Referer": "https://www.waterstones.com/",
-    "Sec-CH-UA": '"Google Chrome";v="140", "Chromium";v="140", "Not=A?Brand";v="24"',
-    "Sec-CH-UA-Platform": '"Windows"',
-    "Sec-CH-UA-Mobile": "?0",
-    "Upgrade-Insecure-Requests": "1",
-    "Accept-Encoding": "gzip, deflate, br, zstd",
-    "Origin": "https://www.waterstones.com",
 }
 
 # Simple in-memory cache
@@ -77,13 +85,24 @@ def _get_client(cookie: str | None = None, user_agent: str | None = None, accept
     # 1) Try curl_cffi with browser impersonation (very effective for CF)
     try:
         from curl_cffi import requests as cf_requests  # type: ignore
-        sess = cf_requests.Session(impersonate="chrome")
-        sess.headers.update(headers)
-        return sess, "curl_cffi"
-    except ImportError:
-        pass
-    except Exception:
-        pass
+        # Try multiple Chrome versions in order of preference
+        for chrome_version in ["chrome116", "chrome110", "chrome104", "chrome99"]:
+            try:
+                sess = cf_requests.Session(impersonate=chrome_version)
+                sess.headers.update(headers)
+                print(f"✓ Using curl_cffi client with {chrome_version} (cookie present: {bool(headers.get('Cookie'))})")
+                if headers.get('Cookie'):
+                    print(f"  Cookie preview: {headers.get('Cookie', '')[:80]}...")
+                return sess, "curl_cffi"
+            except Exception as e:
+                print(f"✗ curl_cffi {chrome_version} failed: {e}")
+                continue
+        # If all versions fail, raise the last exception
+        raise Exception("All curl_cffi browser versions failed")
+    except ImportError as e:
+        print(f"✗ curl_cffi ImportError: {e}")
+    except Exception as e:
+        print(f"✗ curl_cffi Exception: {e}")
     
     # 2) Try cloudscraper
     try:
@@ -113,8 +132,13 @@ def fetch_homepage(cookie: str | None = None, user_agent: str | None = None, acc
     - title: page title
     - sections: list of sections with h2 headers and their book content
     """
-    # Check cache first
-    cache_key = _get_cache_key(cookie, user_agent, accept_language)
+    # Resolve actual values that will be used (including env vars)
+    actual_cookie = cookie or os.environ.get("WATERSTONES_COOKIE") or os.environ.get("WATERSTONES_COOKIES")
+    actual_user_agent = user_agent or os.environ.get("WATERSTONES_USER_AGENT")
+    actual_accept_language = accept_language or os.environ.get("WATERSTONES_ACCEPT_LANGUAGE")
+    
+    # Check cache first using actual values
+    cache_key = _get_cache_key(actual_cookie, actual_user_agent, actual_accept_language)
     cached_result = _get_from_cache(cache_key)
     if cached_result:
         # Add cache info to result
@@ -124,9 +148,13 @@ def fetch_homepage(cookie: str | None = None, user_agent: str | None = None, acc
     
     client, client_type = _get_client(cookie=cookie, user_agent=user_agent, accept_language=accept_language)
     
-    # First attempt
+    # First attempt - use session headers (already set in _get_client)
+    resp = None
     try:
-        resp = client.get(WATERSTONES_URL, timeout=20)
+        print(f"→ Making request with {client_type} client to {WATERSTONES_URL}...")
+        resp = client.get(WATERSTONES_URL, timeout=25)
+        print(f"→ Response status: {resp.status_code}")
+        print(f"→ Response size: {len(resp.content)} bytes")
         if resp.status_code == 200:
             # Success!
             pass
@@ -137,35 +165,38 @@ def fetch_homepage(cookie: str | None = None, user_agent: str | None = None, acc
                 try:
                     from curl_cffi import requests as cf_requests
                     headers = _build_headers(cookie=cookie, user_agent=user_agent, accept_language=accept_language)
+                    print("→ Retrying with chrome110 impersonation...")
                     alt_client = cf_requests.Session(impersonate="chrome110")
                     alt_client.headers.update(headers)
-                    resp = alt_client.get(WATERSTONES_URL, timeout=20)
-                except Exception:
+                    resp = alt_client.get(WATERSTONES_URL, timeout=25)
+                    print(f"→ Retry response: {resp.status_code}")
+                except Exception as e:
+                    print(f"→ Retry failed: {e}")
                     pass
             
             # If still 403, try cloudscraper as fallback
-            if resp.status_code == 403:
+            if resp and resp.status_code == 403:
                 try:
                     import cloudscraper
                     headers = _build_headers(cookie=cookie, user_agent=user_agent, accept_language=accept_language)
                     scraper = cloudscraper.create_scraper()
-                    scraper.headers.update(headers)
-                    resp = scraper.get(WATERSTONES_URL, timeout=20)
+                    resp = scraper.get(WATERSTONES_URL, headers=headers, timeout=25)
                 except Exception:
                     pass
             
             # Last resort: plain requests
-            if resp.status_code == 403:
+            if resp and resp.status_code == 403:
                 headers = _build_headers(cookie=cookie, user_agent=user_agent, accept_language=accept_language)
                 alt = requests.Session()
-                alt.headers.update(headers)
-                resp = alt.get(WATERSTONES_URL, timeout=20)
+                resp = alt.get(WATERSTONES_URL, headers=headers, timeout=25)
         
-        resp.raise_for_status()
+        if resp:
+            resp.raise_for_status()
         
     except Exception as e:
         # Enhanced error message with specific guidance
-        error_msg = f"Failed to fetch Waterstones homepage (status {getattr(resp, 'status_code', 'unknown')}). "
+        status_code = getattr(resp, 'status_code', 'unknown') if resp else 'connection failed'
+        error_msg = f"Failed to fetch Waterstones homepage (status {status_code}). "
         
         if not cookie:
             error_msg += "No cookie provided. To bypass Cloudflare:\n"
@@ -178,6 +209,9 @@ def fetch_homepage(cookie: str | None = None, user_agent: str | None = None, acc
             error_msg += "Try getting a fresh cf_clearance cookie from your browser."
         
         raise RuntimeError(error_msg) from e
+
+    if not resp:
+        raise RuntimeError("Failed to fetch Waterstones homepage: No response received. Please check your internet connection and try again.")
 
     soup = BeautifulSoup(resp.text, "html.parser")
 

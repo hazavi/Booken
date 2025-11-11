@@ -1,4 +1,5 @@
-import { API_BASE_URL, API_ENDPOINTS, DEFAULT_FETCH_OPTIONS } from './config';
+import { buildApiUrl, DEFAULT_FETCH_OPTIONS } from './config';
+import { API_ENDPOINTS } from './config';
 import { HomepageResponse } from './types';
 
 /**
@@ -6,16 +7,21 @@ import { HomepageResponse } from './types';
  */
 export async function getHomepageData(): Promise<HomepageResponse> {
   try {
-    const response = await fetch(
-      `${API_BASE_URL}${API_ENDPOINTS.HOMEPAGE}`,
-      DEFAULT_FETCH_OPTIONS
-    );
+    const url = buildApiUrl(API_ENDPOINTS.HOMEPAGE);
+    
+    const response = await fetch(url, DEFAULT_FETCH_OPTIONS);
 
     if (!response.ok) {
       throw new Error(`Failed to fetch homepage data: ${response.status} ${response.statusText}`);
     }
 
-    return await response.json();
+    const result: HomepageResponse = await response.json();
+    
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to fetch homepage data');
+    }
+
+    return result;
   } catch (error) {
     console.error('Error fetching homepage data:', error);
     throw error;

@@ -17,18 +17,21 @@ export interface BookSection {
   see_more_url?: string;
 }
 
+export interface HomepageData {
+  cache_key: string;
+  cached: boolean;
+  sections: BookSection[];
+  source: string;
+  timestamp: number;
+  title: string;
+  total_books: number;
+  total_sections: number;
+}
+
 export interface HomepageResponse {
-  data: {
-    cache_key: string;
-    cached: boolean;
-    sections: BookSection[];
-    source: string;
-    timestamp: number;
-    title: string;
-    total_books: number;
-    total_sections: number;
-  };
   success: boolean;
+  data: HomepageData;
+  error?: string;
 }
 
 export interface Author {
@@ -97,9 +100,13 @@ export interface Recommendation {
   url: string;
 }
 
+export interface BookDetailData {
+  book_info: BookInfo;
+  recommendations: Recommendation[];
+}
+
 export interface BookDetailResponse {
-  data: {
-    book_info: BookInfo;
-    recommendations: Recommendation[];
-  };
+  success: boolean;
+  data: BookDetailData;
+  error?: string;
 }

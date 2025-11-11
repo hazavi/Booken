@@ -81,9 +81,17 @@ def scrape_waterstones_homepage():
             user_agent = body.get('user_agent') or user_agent
             accept_language = body.get('accept_language') or accept_language
 
+        # If no cookie provided, use the one from environment (app.py loaded it)
+        if not cookie:
+            cookie = os.getenv('WATERSTONES_COOKIE') or os.getenv('WATERSTONES_COOKIES')
+        
         data = fetch_homepage(cookie=cookie, user_agent=user_agent, accept_language=accept_language)
         return jsonify({"success": True, "data": data})
     except Exception as e:
+        # Log the full error for debugging
+        import traceback
+        print(f"ERROR in homepage endpoint: {str(e)}")
+        print(traceback.format_exc())
         return jsonify({"success": False, "error": str(e)}), 500
 
 @app.route('/api/book/<path:book_path>', methods=['GET', 'POST'])
