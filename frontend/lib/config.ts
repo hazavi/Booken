@@ -17,9 +17,11 @@ export const DEFAULT_FETCH_OPTIONS: RequestInit = {
   },
 };
 
-// Helper to build API URL with key
+// Helper to build API URL (API key sent via header, not query param for security)
 export function buildApiUrl(endpoint: string, queryParams?: Record<string, string>): string {
+  if (!queryParams || Object.keys(queryParams).length === 0) {
+    return `${API_BASE_URL}${endpoint}`;
+  }
   const params = new URLSearchParams(queryParams);
-  params.append('api_key', API_KEY);
   return `${API_BASE_URL}${endpoint}?${params.toString()}`;
 }

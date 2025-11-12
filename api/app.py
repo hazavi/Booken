@@ -660,6 +660,9 @@ def clear_cache_endpoint():
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 
+# Vercel serverless function handler
+handler = app
+
 if __name__ == '__main__':
     print("Starting Web Scraping API...")
     print("API will be available at: http://localhost:5000")
