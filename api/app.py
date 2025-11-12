@@ -1,14 +1,19 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
-from dotenv import load_dotenv
 import os
 from functools import wraps
+
+# Only load dotenv locally, not on Vercel
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except:
+    pass
+
+# Import scrapers after environment is loaded
 from scrapers.homepage import fetch_homepage, clear_cache as clear_homepage_cache, get_cache_stats as get_homepage_cache_stats
 from scrapers.book_detail import fetch_book_detail, clear_cache as clear_book_detail_cache, get_cache_stats as get_book_detail_cache_stats
 from scrapers.bestsellers import fetch_bestsellers, clear_cache as clear_bestsellers_cache, get_cache_stats as get_bestsellers_cache_stats
-
-# Load environment variables
-load_dotenv()
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
@@ -666,13 +671,4 @@ handler = app
 if __name__ == '__main__':
     print("Starting Web Scraping API...")
     print("API will be available at: http://localhost:5000")
-    print("Waterstones homepage scraper: http://localhost:5000/api/homepage")
-    print("Book detail scraper: http://localhost:5000/api/book/<book_path>")
-    print("  Example: http://localhost:5000/api/book/the-courage-to-be-disliked/ichiro-kishimi/fumitake-koga/9781760630737")
-    print("Bestsellers scraper: http://localhost:5000/api/books/bestsellers")
-    print("  Example: http://localhost:5000/api/books/bestsellers?page=1&sort=bestselling&category=354")
-    print("Bestsellers with pagination: http://localhost:5000/api/books/bestsellers/page/<page>")
-    print("  Example: http://localhost:5000/api/books/bestsellers/page/2?sort=bestselling")
-    print("Cache stats: http://localhost:5000/cache/stats")
-    print("Clear cache: POST http://localhost:5000/cache/clear")
     app.run(debug=True, host='0.0.0.0', port=5000)
