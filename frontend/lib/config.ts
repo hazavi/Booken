@@ -3,9 +3,9 @@ export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost
 export const API_KEY = process.env.NEXT_PUBLIC_API_KEY || '';
 
 export const API_ENDPOINTS = {
-  HOMEPAGE: '/api/homepage',
-  BOOK_DETAIL: '/api/book',
-  BESTSELLERS: '/api/books/bestsellers',
+  HOMEPAGE: '/homepage',
+  BOOK_DETAIL: '/book',
+  BESTSELLERS: '/books/bestsellers',
 } as const;
 
 // API fetch configuration
