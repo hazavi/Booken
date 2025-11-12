@@ -1,5 +1,5 @@
-import type { Book as HomePageBook } from "../lib/types";
-import type { Book as BestsellerBook } from "../lib/books";
+import type { Book as HomePageBook } from "./types";
+import type { Book as BestsellerBook } from "./books";
 
 /**
  * Converts a bestseller book to homepage book format
